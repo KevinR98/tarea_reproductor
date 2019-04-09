@@ -33,31 +33,48 @@ public class MainActivity extends AppCompatActivity {
     public void onClickPlay(View view){
 
         if(playing){
-            mediaPlayer.pause();
-            view.setBackgroundResource(android.R.drawable.ic_media_play);
+            pauseSong();
         } else {
-            mediaPlayer.start();
-            view.setBackgroundResource(android.R.drawable.ic_media_pause);
+            startSong();
         }
-        playing = !playing;
     }
 
     public void onClickNext(View view){
-        Log.i("currentSong", Integer.toString(currentSong));
+        nextSong();
+    }
+
+    public void onClickPrevious(View view){
+        previousSong();
+    }
+
+    private void pauseSong(){
+        mediaPlayer.pause();
+        findViewById(R.id.playButton).setBackgroundResource(android.R.drawable.ic_media_play);
+        playing = false;
+    }
+
+    private void startSong(){
+        mediaPlayer.start();
+        findViewById(R.id.playButton).setBackgroundResource(android.R.drawable.ic_media_pause);
+        playing = true;
+    }
+
+    private boolean nextSong(){
         if(currentSong != songs.size()-1){
             ++currentSong;
             playSong(currentSong);
+            return true;
         }
-        Log.i("currentSong", Integer.toString(currentSong));
+        return false;
     }
 
-    public void onClickPreviouos(View view){
-        Log.i("currentSong", Integer.toString(currentSong));
+    private boolean previousSong(){
         if(currentSong != 0){
             --currentSong;
             playSong(currentSong);
+            return true;
         }
-        Log.i("currentSong", Integer.toString(currentSong));
+        return false;
     }
 
     private void playSong (int position){
@@ -73,11 +90,24 @@ public class MainActivity extends AppCompatActivity {
         int resourceId = this.getResources().getIdentifier(songName, "raw", this.getPackageName());
 
         mediaPlayer = MediaPlayer.create(this, resourceId);
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                if(nextSong()) {startSong();}
+                else{
+                    findViewById(R.id.playButton).setBackgroundResource(android.R.drawable.ic_media_play);
+                }
+            }
+        });
+
 
         findViewById(R.id.playButton).setBackgroundResource(android.R.drawable.ic_media_play);
         playing = false;
 
-        //mediaPlayer.start();
+        SeekBar musicBar = findViewById(R.id.songProgress);
+        musicBar.setMax(mediaPlayer.getDuration());
+        musicBar.setProgress(mediaPlayer.getCurrentPosition());
+
     }
 
     private void setSongsList(){
@@ -85,6 +115,14 @@ public class MainActivity extends AppCompatActivity {
         songs.add(getResources().getResourceEntryName(R.raw.bensound_betterdays));
         songs.add(getResources().getResourceEntryName(R.raw.bensound_onceagain));
         songs.add(getResources().getResourceEntryName(R.raw.bensound_tomorrow));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_dreams));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_newdawn));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_scifi));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_summer));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_thejazzpiano));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_thelounge));
+        songs.add(getResources().getResourceEntryName(R.raw.bensound_theelevatorbossanova));
+
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, songs);
         songsList.setAdapter(adapter);
@@ -105,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
         setSongsList();
         playSong(currentSong);
 
+
         //setVolumeBar
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
@@ -115,7 +154,9 @@ public class MainActivity extends AppCompatActivity {
         volumeBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+                if(fromUser){
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, progress, 0);
+                }
             }
 
             @Override
@@ -156,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
         Runnable run  = new Runnable() {
             @Override
             public void run() {
-                handler.postDelayed(this, 1000);
+                handler.postDelayed(this, 500);
                 musicBar.setProgress(mediaPlayer.getCurrentPosition());
             }
         };
